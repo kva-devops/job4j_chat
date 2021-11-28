@@ -1,0 +1,23 @@
+language: java
+
+dist: focal
+
+jdk:
+  - openjdk14
+
+sudo: false
+
+env:
+
+  global:
+    - CODECOV_TOKEN="5d44f271-5c1d-4a8b-9df2-4cfbe7db260e"
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
+
+notifications:
+  email:
+    recipients:
+      - kva.devops@gmail.com
+    on_success: never
+    on_failure: always
