@@ -4,6 +4,9 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
+  <modules>
+    <module>chat</module>
+  </modules>
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
@@ -14,7 +17,7 @@
   <groupId>ru.job4j</groupId>
   <artifactId>job4j_chat</artifactId>
   <version>1</version>
-  <packaging>war</packaging>
+  <packaging>pom</packaging>
 
   <name>job4j_chat Maven Webapp</name>
   <!-- FIXME change it to the project's website -->
