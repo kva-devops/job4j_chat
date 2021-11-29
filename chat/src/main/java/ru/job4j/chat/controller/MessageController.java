@@ -9,10 +9,8 @@ import ru.job4j.chat.model.Message;
 import ru.job4j.chat.model.Person;
 import ru.job4j.chat.model.Room;
 import ru.job4j.chat.repository.MessageRepository;
-import ru.job4j.chat.repository.RoomRepository;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -23,18 +21,14 @@ public class MessageController {
     @Autowired
     private RestTemplate rest;
 
-    private static final String PERSON_API_ID = "http://localhost:8080/person/{id}";
+    private static final String USER_API_ID = "http://localhost:8080/users/{id}";
+
+    private static final String ROOM_API_ID = "http://localhost:8080/room/{id}";
 
     private final MessageRepository messageRepository;
 
-    private final RoomRepository roomRepository;
-
-
-    public MessageController(final MessageRepository messageRepository,
-                             final RoomRepository roomRepository
-            ) {
+    public MessageController(final MessageRepository messageRepository) {
         this.messageRepository = messageRepository;
-        this.roomRepository = roomRepository;
     }
 
     @GetMapping("/")
@@ -55,9 +49,9 @@ public class MessageController {
 
     @PostMapping("/")
     public ResponseEntity<Message> create(@RequestBody Message message) {
-        Optional<Room> room = this.roomRepository.findById(1);
-        Person person = rest.getForObject(PERSON_API_ID, Person.class, 2);
-        Message buff = Message.of(message.getText(), room.get(), person);
+        Room room = rest.getForObject(ROOM_API_ID, Room.class, 1);
+        Person person = rest.getForObject(USER_API_ID, Person.class, 2);
+        Message buff = Message.of(message.getText(), room, person);
         return new ResponseEntity<Message>(
                 this.messageRepository.save(buff),
                 HttpStatus.CREATED

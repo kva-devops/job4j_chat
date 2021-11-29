@@ -3,32 +3,37 @@ package ru.job4j.chat.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 import ru.job4j.chat.model.Person;
 import ru.job4j.chat.model.Role;
 import ru.job4j.chat.repository.PersonRepository;
+import ru.job4j.chat.repository.RoleRepository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 @RestController
-@RequestMapping("/person")
-public class PersonController {
+@RequestMapping("/users")
+public class UserController {
 
-    @Autowired
-    private RestTemplate rest;
-
-    private static final String ROLE_API_ID = "http://localhost:8080/role/{id}";
+    private BCryptPasswordEncoder encoder;
 
     private final PersonRepository personRepository;
 
-    public PersonController(PersonRepository personRepository) {
+    private final RoleRepository roleRepository;
+
+    public UserController(PersonRepository personRepository,
+                          BCryptPasswordEncoder encoder, RoleRepository roleRepository) {
         this.personRepository = personRepository;
+        this.encoder = encoder;
+        this.roleRepository = roleRepository;
     }
 
-    @GetMapping("/")
+    @GetMapping("/all")
     public List<Person> findAll() {
         return StreamSupport.stream(
                 this.personRepository.findAll().spliterator(), false
@@ -44,10 +49,13 @@ public class PersonController {
         );
     }
 
-    @PostMapping("/")
-    public ResponseEntity<Person> create(@RequestBody Person person) {
-        Role role = rest.getForObject(ROLE_API_ID, Role.class, 1);
-        Person buff = Person.of(person.getUsername(), person.getPassword(), role);
+    @PostMapping("/sign-up")
+    public ResponseEntity<Person> signUp(@RequestBody Person person) {
+        Optional<Role> role = roleRepository.findById(1);
+        Person buff = Person.of(
+                person.getUsername(),
+                encoder.encode(person.getPassword()),
+                role.get());
         return new ResponseEntity<>(
                 this.personRepository.save(buff),
                 HttpStatus.CREATED
