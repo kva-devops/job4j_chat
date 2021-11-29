@@ -1,18 +1,15 @@
 package ru.job4j.chat.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 import ru.job4j.chat.model.Person;
 import ru.job4j.chat.model.Role;
 import ru.job4j.chat.repository.PersonRepository;
-import ru.job4j.chat.repository.RoleRepository;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -20,17 +17,19 @@ import java.util.stream.StreamSupport;
 @RequestMapping("/users")
 public class UserController {
 
+    @Autowired
+    private RestTemplate rest;
+
     private BCryptPasswordEncoder encoder;
 
     private final PersonRepository personRepository;
 
-    private final RoleRepository roleRepository;
+    private static final String ROLE_API_ID = "http://localhost:8080/role/{id}";
 
     public UserController(PersonRepository personRepository,
-                          BCryptPasswordEncoder encoder, RoleRepository roleRepository) {
+                          BCryptPasswordEncoder encoder) {
         this.personRepository = personRepository;
         this.encoder = encoder;
-        this.roleRepository = roleRepository;
     }
 
     @GetMapping("/all")
@@ -49,13 +48,28 @@ public class UserController {
         );
     }
 
-    @PostMapping("/sign-up")
-    public ResponseEntity<Person> signUp(@RequestBody Person person) {
-        Optional<Role> role = roleRepository.findById(1);
+    @GetMapping("/username/{username}")
+    public ResponseEntity<Person> findByUsername(@PathVariable String username) {
+        var person = this.personRepository.findByUsername(username);
+        return new ResponseEntity<>(
+                person.orElse(new Person()),
+                person.isPresent() ? HttpStatus.OK : HttpStatus.NOT_FOUND
+        );
+    }
+
+    @PostMapping("/sign-up/role/{id}")
+    public ResponseEntity<Person> signUp(
+            @PathVariable("id") int id,
+            @RequestBody Person person,
+            @RequestHeader("Authorization") String token) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", token);
+        HttpEntity<?> entity = new HttpEntity<>(headers);
+        ResponseEntity<Role> role = rest.exchange(ROLE_API_ID, HttpMethod.GET, entity, Role.class, id);
         Person buff = Person.of(
                 person.getUsername(),
                 encoder.encode(person.getPassword()),
-                role.get());
+                role.getBody());
         return new ResponseEntity<>(
                 this.personRepository.save(buff),
                 HttpStatus.CREATED

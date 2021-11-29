@@ -1,8 +1,7 @@
 package ru.job4j.chat.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
@@ -10,11 +9,8 @@ import ru.job4j.chat.model.Message;
 import ru.job4j.chat.model.Person;
 import ru.job4j.chat.model.Room;
 import ru.job4j.chat.repository.MessageRepository;
-import ru.job4j.chat.repository.PersonRepository;
-import ru.job4j.chat.repository.RoomRepository;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -25,17 +21,13 @@ public class MessageController {
     @Autowired
     private RestTemplate rest;
 
-    private final PersonRepository personRepository;
+    private static final String PERSON_API_USERNAME = "http://localhost:8080/users/username/{username}";
 
-    private final RoomRepository roomRepository;
+    private static final String ROOM_API_ID = "http://localhost:8080/room/{id}";
 
     private final MessageRepository messageRepository;
 
-    public MessageController(PersonRepository personRepository,
-                             RoomRepository roomRepository,
-                             final MessageRepository messageRepository) {
-        this.personRepository = personRepository;
-        this.roomRepository = roomRepository;
+    public MessageController(final MessageRepository messageRepository) {
         this.messageRepository = messageRepository;
     }
 
@@ -62,12 +54,15 @@ public class MessageController {
         );
     }
 
-    @PostMapping("/")
-    public ResponseEntity<Message> create(@RequestBody Message message) {
-        Optional<Room> room = roomRepository.findById(1);
+    @PostMapping("/room/{id}")
+    public ResponseEntity<Message> create(@PathVariable("id") int id, @RequestBody Message message, @RequestHeader("Authorization") String token) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", token);
+        HttpEntity<?> entity = new HttpEntity<>(headers);
+        ResponseEntity<Room> room = rest.exchange(ROOM_API_ID, HttpMethod.GET, entity, Room.class, id);
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        Person person = personRepository.findByUsername(username);
-        Message buff = Message.of(message.getText(), room.get(), person);
+        ResponseEntity<Person> person = rest.exchange(PERSON_API_USERNAME, HttpMethod.GET, entity, Person.class, username);
+        Message buff = Message.of(message.getText(), room.getBody(), person.getBody());
         return new ResponseEntity<Message>(
                 this.messageRepository.save(buff),
                 HttpStatus.CREATED

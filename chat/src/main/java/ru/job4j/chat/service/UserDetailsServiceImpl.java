@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 import ru.job4j.chat.model.Person;
 import ru.job4j.chat.repository.PersonRepository;
 
+import java.util.Optional;
+
 import static java.util.Collections.emptyList;
 
 @Service
@@ -21,11 +23,11 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        Person user = personRepository.findByUsername(username);
-        if (user == null) {
+        Optional<Person> user = personRepository.findByUsername(username);
+        if (!user.isPresent()) {
             throw new UsernameNotFoundException(username);
         }
-        return new User(user.getUsername(), user.getPassword(), emptyList());
+        return new User(user.get().getUsername(), user.get().getPassword(), emptyList());
     }
 
 }
