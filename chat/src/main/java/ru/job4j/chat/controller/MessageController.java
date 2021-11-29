@@ -3,14 +3,18 @@ package ru.job4j.chat.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 import ru.job4j.chat.model.Message;
 import ru.job4j.chat.model.Person;
 import ru.job4j.chat.model.Room;
 import ru.job4j.chat.repository.MessageRepository;
+import ru.job4j.chat.repository.PersonRepository;
+import ru.job4j.chat.repository.RoomRepository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -21,13 +25,17 @@ public class MessageController {
     @Autowired
     private RestTemplate rest;
 
-    private static final String USER_API_ID = "http://localhost:8080/users/{id}";
+    private final PersonRepository personRepository;
 
-    private static final String ROOM_API_ID = "http://localhost:8080/room/{id}";
+    private final RoomRepository roomRepository;
 
     private final MessageRepository messageRepository;
 
-    public MessageController(final MessageRepository messageRepository) {
+    public MessageController(PersonRepository personRepository,
+                             RoomRepository roomRepository,
+                             final MessageRepository messageRepository) {
+        this.personRepository = personRepository;
+        this.roomRepository = roomRepository;
         this.messageRepository = messageRepository;
     }
 
@@ -35,6 +43,13 @@ public class MessageController {
     public List<Message> findAll() {
         return StreamSupport.stream(
                 this.messageRepository.findAll().spliterator(), false
+        ).collect(Collectors.toList());
+    }
+
+    @GetMapping("/byUserId/{id}")
+    public List<Message> findByUserId(@PathVariable int id) {
+        return StreamSupport.stream(
+                this.messageRepository.findAllByUserId(id).spliterator(), false
         ).collect(Collectors.toList());
     }
 
@@ -49,9 +64,10 @@ public class MessageController {
 
     @PostMapping("/")
     public ResponseEntity<Message> create(@RequestBody Message message) {
-        Room room = rest.getForObject(ROOM_API_ID, Room.class, 1);
-        Person person = rest.getForObject(USER_API_ID, Person.class, 2);
-        Message buff = Message.of(message.getText(), room, person);
+        Optional<Room> room = roomRepository.findById(1);
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        Person person = personRepository.findByUsername(username);
+        Message buff = Message.of(message.getText(), room.get(), person);
         return new ResponseEntity<Message>(
                 this.messageRepository.save(buff),
                 HttpStatus.CREATED
