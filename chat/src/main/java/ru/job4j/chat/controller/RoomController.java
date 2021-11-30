@@ -96,6 +96,6 @@ public class RoomController {
         resp.getWriter().write(mapper.writeValueAsString(new HashMap<>() { {
             put("message", e.getMessage());
             put("type", e.getClass());
-        }}));
+        } }));
     }
 }

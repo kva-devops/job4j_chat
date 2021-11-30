@@ -29,6 +29,6 @@ public class GlobalExceptionHandler {
         resp.getWriter().write(mapper.writeValueAsString(new HashMap<>() { {
             put("message", "Empty fields");
             put("details", e.getMessage());
-        }}));
+        } }));
     }
 }
