@@ -34,10 +34,9 @@ public class RoleController {
         if (role.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Role not found");
         }
-        return new ResponseEntity<>(
-                role.get(),
-                HttpStatus.OK
-        );
+        return ResponseEntity.status(HttpStatus.OK)
+                .header("Content-Type", "application/json")
+                .body(role.get());
     }
 
     @PostMapping("/")
