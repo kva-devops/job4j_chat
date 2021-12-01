@@ -11,6 +11,10 @@ import ru.job4j.chat.model.Person;
 import ru.job4j.chat.model.Room;
 import ru.job4j.chat.repository.MessageRepository;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.sql.Timestamp;
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -81,14 +85,38 @@ public class MessageController {
         );
     }
 
-    @PutMapping("/")
-    public ResponseEntity<Void> update(@RequestBody Message message) {
-        if (message.getText() == null) {
-            throw new NullPointerException("Text field is empty");
+    @PatchMapping("/")
+    public ResponseEntity<Void> update(@RequestBody Message message) throws InvocationTargetException, IllegalAccessException {
+        var current = messageRepository.findById(message.getId());
+        if (current.isEmpty()) {
+            throw new NullPointerException("Message not found");
         }
-        Message buff = this.messageRepository.findById(message.getId()).get();
-        buff.setText(message.getText());
-        this.messageRepository.save(buff);
+        var buffMessage = current.get();
+        var methods = buffMessage.getClass().getDeclaredMethods();
+        var namePerMethod = new HashMap<String, Method>();
+        for (var method : methods) {
+            var name = method.getName();
+            if (name.startsWith("get") || name.startsWith("set")) {
+                namePerMethod.put(name, method);
+            }
+        }
+        for (var name : namePerMethod.keySet()) {
+            if (name.startsWith("get")) {
+                var getMethod = namePerMethod.get(name);
+                var setMethod = namePerMethod.get(name.replace("get", "set"));
+                if (setMethod == null) {
+                    throw new NullPointerException("Invalid properties");
+                }
+                var newValue = getMethod.invoke(message);
+                if (name.equals("getCreated")) {
+                    newValue = new Timestamp(System.currentTimeMillis());
+                }
+                if (newValue != null) {
+                    setMethod.invoke(buffMessage, newValue);
+                }
+            }
+        }
+        messageRepository.save(buffMessage);
         return ResponseEntity.ok().build();
     }
 

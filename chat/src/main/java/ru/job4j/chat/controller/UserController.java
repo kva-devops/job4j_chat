@@ -10,6 +10,9 @@ import ru.job4j.chat.model.Person;
 import ru.job4j.chat.model.Role;
 import ru.job4j.chat.repository.PersonRepository;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -83,15 +86,38 @@ public class UserController {
         );
     }
 
-    @PutMapping("/")
-    public ResponseEntity<Void> update(@RequestBody Person person) {
-        if (person.getUsername() == null || person.getPassword() == null) {
-            throw new NullPointerException("Username or Password field's is empty");
+    @PatchMapping("/")
+    public ResponseEntity<Void> update(@RequestBody Person person) throws InvocationTargetException, IllegalAccessException {
+        var current = personRepository.findById(person.getId());
+        if (current.isEmpty()) {
+            throw new NullPointerException("Person not found");
         }
-        Person buff = this.personRepository.findById(person.getId()).get();
-        buff.setUsername(person.getUsername());
-        buff.setPassword(person.getPassword());
-        this.personRepository.save(buff);
+        var buffPerson = current.get();
+        var methods = buffPerson.getClass().getDeclaredMethods();
+        var namePerMethod = new HashMap<String, Method>();
+        for (var method : methods) {
+            var name = method.getName();
+            if (name.startsWith("get") || name.startsWith("set")) {
+                namePerMethod.put(name, method);
+            }
+        }
+        for (var name : namePerMethod.keySet()) {
+            if (name.startsWith("get")) {
+                var getMethod = namePerMethod.get(name);
+                var setMethod = namePerMethod.get(name.replace("get", "set"));
+                if (setMethod == null) {
+                    throw new NullPointerException("Invalid properties");
+                }
+                var newValue = getMethod.invoke(person);
+                if (name.equals("getPassword")) {
+                    newValue = encoder.encode((String) newValue);
+                }
+                if (newValue != null) {
+                    setMethod.invoke(buffPerson, newValue);
+                }
+            }
+        }
+        personRepository.save(buffPerson);
         return ResponseEntity.ok().build();
     }
 

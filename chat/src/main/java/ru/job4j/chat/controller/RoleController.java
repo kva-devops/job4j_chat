@@ -7,6 +7,9 @@ import org.springframework.web.server.ResponseStatusException;
 import ru.job4j.chat.model.Role;
 import ru.job4j.chat.repository.RoleRepository;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -51,14 +54,35 @@ public class RoleController {
         );
     }
 
-    @PutMapping("/")
-    public ResponseEntity<Void> update(@RequestBody Role role) {
-        if (role.getName() == null) {
-            throw new NullPointerException("Name field is empty");
+    @PatchMapping("/")
+    public ResponseEntity<Void> update(@RequestBody Role role) throws InvocationTargetException, IllegalAccessException {
+        var current = roleRepository.findById(role.getId());
+        if (current.isEmpty()) {
+            throw new NullPointerException("Role not found");
         }
-        Role buff = this.roleRepository.findById(role.getId()).get();
-        buff.setName(role.getName());
-        this.roleRepository.save(buff);
+        var buffRole = current.get();
+        var methods = buffRole.getClass().getDeclaredMethods();
+        var namePerMethod = new HashMap<String, Method>();
+        for (var method : methods) {
+            var name = method.getName();
+            if (name.startsWith("get") || name.startsWith("set")) {
+                namePerMethod.put(name, method);
+            }
+        }
+        for (var name : namePerMethod.keySet()) {
+            if (name.startsWith("get")) {
+                var getMethod = namePerMethod.get(name);
+                var setMethod = namePerMethod.get(name.replace("get", "set"));
+                if (setMethod == null) {
+                    throw new NullPointerException("Invalid properties");
+                }
+                var newValue = getMethod.invoke(role);
+                if (newValue != null) {
+                    setMethod.invoke(buffRole, newValue);
+                }
+            }
+        }
+        roleRepository.save(buffRole);
         return ResponseEntity.ok().build();
     }
 

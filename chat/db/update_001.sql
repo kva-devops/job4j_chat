@@ -19,8 +19,8 @@ create table messages (
     id serial primary key,
     text varchar (2000),
     created timestamp,
-    room_id int references rooms(id),
-    person_id int references persons(id)
+    room_id int references rooms(id) on delete cascade,
+    person_id int references persons(id) on delete cascade
 );
 
 insert into rooms (name) values ('common');
@@ -29,5 +29,3 @@ insert into rooms (name) values ('vip');
 insert into roles (name) values ('guest');
 insert into roles (name) values ('user');
 insert into roles (name) values ('moderator');
-
-insert into persons (username, password, role_id) values ('test', '1111', 1);

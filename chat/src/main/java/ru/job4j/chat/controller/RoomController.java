@@ -11,6 +11,8 @@ import ru.job4j.chat.repository.RoomRepository;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
 
@@ -64,14 +66,35 @@ public class RoomController {
         );
     }
 
-    @PutMapping("/")
-    public ResponseEntity<Void> update(@RequestBody Room room) {
-        if (room.getName() == null) {
-            throw new NullPointerException("Name field is empty");
+    @PatchMapping("/")
+    public ResponseEntity<Void> update(@RequestBody Room room) throws InvocationTargetException, IllegalAccessException {
+        var current = roomRepository.findById(room.getId());
+        if (current.isEmpty()) {
+            throw new NullPointerException("Room not found");
         }
-        Room buff = this.roomRepository.findById(room.getId()).get();
-        buff.setName(room.getName());
-        this.roomRepository.save(buff);
+        var buffRoom = current.get();
+        var methods = buffRoom.getClass().getDeclaredMethods();
+        var namePerMethod = new HashMap<String, Method>();
+        for (var method : methods) {
+            var name = method.getName();
+            if (name.startsWith("get") || name.startsWith("set")) {
+                namePerMethod.put(name, method);
+            }
+        }
+        for (var name : namePerMethod.keySet()) {
+            if (name.startsWith("get")) {
+                var getMethod = namePerMethod.get(name);
+                var setMethod = namePerMethod.get(name.replace("get", "set"));
+                if (setMethod == null) {
+                    throw new NullPointerException("Invalid properties");
+                }
+                var newValue = getMethod.invoke(room);
+                if (newValue != null) {
+                    setMethod.invoke(buffRoom, newValue);
+                }
+            }
+        }
+        roomRepository.save(buffRoom);
         return ResponseEntity.ok().build();
     }
 
