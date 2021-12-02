@@ -2,11 +2,14 @@ package ru.job4j.chat.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import ru.job4j.chat.handlers.Operation;
 import ru.job4j.chat.model.Role;
 import ru.job4j.chat.repository.RoleRepository;
 
+import javax.validation.Valid;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -15,6 +18,7 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 @RestController
+@Validated
 @RequestMapping("/role")
 public class RoleController {
 
@@ -43,7 +47,8 @@ public class RoleController {
     }
 
     @PostMapping("/")
-    public ResponseEntity<Role> create(@RequestBody Role role) {
+    @Validated(Operation.OnCreate.class)
+    public ResponseEntity<Role> create(@Valid @RequestBody Role role) {
         if (role.getName() == null) {
             throw new NullPointerException("Name field is empty");
         }
@@ -55,6 +60,7 @@ public class RoleController {
     }
 
     @PatchMapping("/")
+    @Validated(Operation.OnCreate.class)
     public ResponseEntity<Void> update(@RequestBody Role role) throws InvocationTargetException, IllegalAccessException {
         var current = roleRepository.findById(role.getId());
         if (current.isEmpty()) {
@@ -87,6 +93,7 @@ public class RoleController {
     }
 
     @DeleteMapping("/{id}")
+    @Validated(Operation.OnDelete.class)
     public ResponseEntity<Void> delete(@PathVariable int id) {
         if (this.roleRepository.findById(id).isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Role not found");

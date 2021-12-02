@@ -3,13 +3,16 @@ package ru.job4j.chat.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import ru.job4j.chat.handlers.Operation;
 import ru.job4j.chat.model.Room;
 import ru.job4j.chat.repository.RoomRepository;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -20,6 +23,7 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 @RestController
+@Validated
 @RequestMapping("/room")
 public class RoomController {
 
@@ -52,7 +56,8 @@ public class RoomController {
     }
 
     @PostMapping("/")
-    public ResponseEntity<Room> create(@RequestBody Room room) {
+    @Validated(Operation.OnCreate.class)
+    public ResponseEntity<Room> create(@Valid @RequestBody Room room) {
         if (room.getName() == null) {
             throw new NullPointerException("Name field is empty");
         }
@@ -67,7 +72,8 @@ public class RoomController {
     }
 
     @PatchMapping("/")
-    public ResponseEntity<Void> update(@RequestBody Room room) throws InvocationTargetException, IllegalAccessException {
+    @Validated(Operation.OnUpdate.class)
+    public ResponseEntity<Void> update(@Valid @RequestBody Room room) throws InvocationTargetException, IllegalAccessException {
         var current = roomRepository.findById(room.getId());
         if (current.isEmpty()) {
             throw new NullPointerException("Room not found");
@@ -99,7 +105,8 @@ public class RoomController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable int id) {
+    @Validated(Operation.OnDelete.class)
+    public ResponseEntity<Void> delete(@Valid @PathVariable int id) {
         if (this.roomRepository.findById(id).isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Room not found");
         }

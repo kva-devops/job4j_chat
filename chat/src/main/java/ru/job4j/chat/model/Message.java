@@ -1,6 +1,10 @@
 package ru.job4j.chat.model;
 
+import ru.job4j.chat.handlers.Operation;
+
 import javax.persistence.*;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.sql.Timestamp;
 import java.util.Objects;
 
@@ -10,8 +14,14 @@ public class Message {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @NotNull(message = "Id must by non null", groups = {
+            Operation.OnUpdate.class, Operation.OnDelete.class
+    })
     private int id;
 
+    @NotBlank(message = "Name must be non empty", groups = {
+            Operation.OnCreate.class, Operation.OnUpdate.class
+    })
     private String text;
 
     private Timestamp created;

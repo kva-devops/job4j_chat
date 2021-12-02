@@ -3,14 +3,17 @@ package ru.job4j.chat.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
+import ru.job4j.chat.handlers.Operation;
 import ru.job4j.chat.model.Message;
 import ru.job4j.chat.model.Person;
 import ru.job4j.chat.model.Room;
 import ru.job4j.chat.repository.MessageRepository;
 
+import javax.validation.Valid;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.Timestamp;
@@ -20,6 +23,7 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 @RestController
+@Validated
 @RequestMapping("/message")
 public class MessageController {
 
@@ -68,7 +72,8 @@ public class MessageController {
     }
 
     @PostMapping("/room/{id}")
-    public ResponseEntity<Message> create(@PathVariable("id") int id, @RequestBody Message message, @RequestHeader("Authorization") String token) {
+    @Validated(Operation.OnCreate.class)
+    public ResponseEntity<Message> create(@PathVariable("id") int id, @Valid @RequestBody Message message, @RequestHeader("Authorization") String token) {
         if (message.getText() == null) {
             throw new NullPointerException("Text field is empty");
         }
@@ -86,7 +91,8 @@ public class MessageController {
     }
 
     @PatchMapping("/")
-    public ResponseEntity<Void> update(@RequestBody Message message) throws InvocationTargetException, IllegalAccessException {
+    @Validated(Operation.OnUpdate.class)
+    public ResponseEntity<Void> update(@Valid @RequestBody Message message) throws InvocationTargetException, IllegalAccessException {
         var current = messageRepository.findById(message.getId());
         if (current.isEmpty()) {
             throw new NullPointerException("Message not found");
@@ -121,7 +127,8 @@ public class MessageController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable int id) {
+    @Validated(Operation.OnDelete.class)
+    public ResponseEntity<Void> delete(@Valid @PathVariable int id) {
         if (this.messageRepository.findById(id).isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Message not found");
         }

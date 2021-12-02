@@ -3,13 +3,16 @@ package ru.job4j.chat.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
+import ru.job4j.chat.handlers.Operation;
 import ru.job4j.chat.model.Person;
 import ru.job4j.chat.model.Role;
 import ru.job4j.chat.repository.PersonRepository;
 
+import javax.validation.Valid;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -18,6 +21,7 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 @RestController
+@Validated
 @RequestMapping("/users")
 public class UserController {
 
@@ -65,9 +69,10 @@ public class UserController {
     }
 
     @PostMapping("/sign-up/role/{id}")
+    @Validated(Operation.OnCreate.class)
     public ResponseEntity<Person> signUp(
             @PathVariable("id") int id,
-            @RequestBody Person person,
+            @Valid @RequestBody Person person,
             @RequestHeader("Authorization") String token) {
         if (person.getUsername() == null || person.getPassword() == null) {
             throw new NullPointerException("Username or Password field's is empty");
@@ -87,7 +92,8 @@ public class UserController {
     }
 
     @PatchMapping("/")
-    public ResponseEntity<Void> update(@RequestBody Person person) throws InvocationTargetException, IllegalAccessException {
+    @Validated(Operation.OnUpdate.class)
+    public ResponseEntity<Void> update(@Valid @RequestBody Person person) throws InvocationTargetException, IllegalAccessException {
         var current = personRepository.findById(person.getId());
         if (current.isEmpty()) {
             throw new NullPointerException("Person not found");
@@ -122,7 +128,8 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable int id) {
+    @Validated(Operation.OnDelete.class)
+    public ResponseEntity<Void> delete(@Valid @PathVariable int id) {
         if (this.personRepository.findById(id).isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Person not found");
         }

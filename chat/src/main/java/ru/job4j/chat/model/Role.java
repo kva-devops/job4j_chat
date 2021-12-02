@@ -1,6 +1,11 @@
 package ru.job4j.chat.model;
 
+import ru.job4j.chat.handlers.Operation;
+
 import javax.persistence.*;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Null;
 import java.util.Objects;
 
 @Entity
@@ -8,8 +13,15 @@ import java.util.Objects;
 public class Role {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @NotNull(message = "Id must by non null", groups = {
+            Operation.OnUpdate.class, Operation.OnDelete.class
+    })
+    @Null(groups = Operation.OnCreate.class)
     private int id;
 
+    @NotBlank(message = "Name must be non empty", groups = {
+            Operation.OnCreate.class, Operation.OnUpdate.class
+    })
     private String name;
 
     public static Role of(String name) {
