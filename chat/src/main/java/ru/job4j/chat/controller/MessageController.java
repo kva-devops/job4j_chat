@@ -16,6 +16,9 @@ import java.util.List;
 @Validated
 @RequestMapping("/message")
 public class MessageController {
+    /**
+     * Business logic for working with object of Message
+     */
     private final MessageService messageService;
 
     public MessageController(MessageService messageService) {

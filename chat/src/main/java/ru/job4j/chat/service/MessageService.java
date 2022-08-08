@@ -139,7 +139,7 @@ public class MessageService {
                 var getMethod = namePerMethod.get(name);
                 var setMethod = namePerMethod.get(name.replace("get", "set"));
                 if (setMethod == null) {
-                    throw new NullPointerException("Invalid properties");
+                    throw new NullPointerException("An internal error has occurred. Please try again later or contact technical support with the 'anchor'. anchor: " + anchor);
                 }
                 Object newValue = null;
                 try {
@@ -174,6 +174,6 @@ public class MessageService {
         }
         Message message = new Message();
         message.setId(messageId);
-        this.messageRepository.delete(message);
+        messageRepository.delete(message);
     }
 }
