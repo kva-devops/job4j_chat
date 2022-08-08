@@ -20,6 +20,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+/**
+ * REST controller for working with objects of Person
+ */
 @RestController
 @Validated
 @RequestMapping("/users")
@@ -30,8 +33,14 @@ public class UserController {
 
     private BCryptPasswordEncoder encoder;
 
+    /**
+     * DAO for objects of Person
+     */
     private final PersonRepository personRepository;
 
+    /**
+     * URI for getting object of Role by role ID
+     */
     private static final String ROLE_API_ID = "http://localhost:8080/role/{id}";
 
     public UserController(PersonRepository personRepository,
@@ -40,6 +49,10 @@ public class UserController {
         this.encoder = encoder;
     }
 
+    /**
+     * GET method for getting all objects of Person
+     * @return List of Persons
+     */
     @GetMapping("/all")
     public List<Person> findAll() {
         return StreamSupport.stream(
@@ -47,30 +60,46 @@ public class UserController {
         ).collect(Collectors.toList());
     }
 
+    /**
+     * GET method for getting object of Person by person ID
+     * @param id - person ID
+     * @return found object of Person
+     */
     @GetMapping("/{id}")
-    public ResponseEntity<Person> findById(@PathVariable int id) {
+    public Person findById(@PathVariable int id) {
         var person = this.personRepository.findById(id);
         if (person.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Person not found");
         }
-        return new ResponseEntity<>(
-                person.get(),
-                HttpStatus.OK
-        );
+        return person.get();
     }
 
+    /**
+     * GET method for getting object of Person by username of person
+     * @param username - username of person
+     * @return found object of Person
+     */
     @GetMapping("/username/{username}")
-    public ResponseEntity<Person> findByUsername(@PathVariable String username) {
+    public Person findByUsername(@PathVariable String username) {
         var person = this.personRepository.findByUsername(username);
-        return new ResponseEntity<>(
-                person.orElse(new Person()),
-                person.isPresent() ? HttpStatus.OK : HttpStatus.NOT_FOUND
-        );
+        // add validation
+        if (person.isEmpty()) {
+            //add validation
+            throw new RuntimeException();
+        }
+        return person.get();
     }
 
+    /**
+     * POST method for signing up new person
+     * @param id - role ID
+     * @param person - object of Person
+     * @param token - JWT token
+     * @return signed up object of Person
+     */
     @PostMapping("/sign-up/role/{id}")
     @Validated(Operation.OnCreate.class)
-    public ResponseEntity<Person> signUp(
+    public Person signUp(
             @PathVariable("id") int id,
             @Valid @RequestBody Person person,
             @RequestHeader("Authorization") String token) {
@@ -85,15 +114,16 @@ public class UserController {
                 person.getUsername(),
                 encoder.encode(person.getPassword()),
                 role.getBody());
-        return new ResponseEntity<>(
-                this.personRepository.save(buff),
-                HttpStatus.CREATED
-        );
+        return this.personRepository.save(buff);
     }
 
+    /**
+     * PATCH method for updating object of Person
+     * @param person - object of Person
+     */
     @PatchMapping("/")
     @Validated(Operation.OnUpdate.class)
-    public ResponseEntity<Void> update(@Valid @RequestBody Person person) throws InvocationTargetException, IllegalAccessException {
+    public void update(@Valid @RequestBody Person person) throws InvocationTargetException, IllegalAccessException {
         var current = personRepository.findById(person.getId());
         if (current.isEmpty()) {
             throw new NullPointerException("Person not found");
@@ -124,18 +154,21 @@ public class UserController {
             }
         }
         personRepository.save(buffPerson);
-        return ResponseEntity.ok().build();
     }
 
+    /**
+     * DELETE method for deleting object of Person by person ID
+     * @param id - person ID
+     * @return
+     */
     @DeleteMapping("/{id}")
     @Validated(Operation.OnDelete.class)
-    public ResponseEntity<Void> delete(@Valid @PathVariable int id) {
+    public void delete(@Valid @PathVariable int id) {
         if (this.personRepository.findById(id).isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Person not found");
         }
         Person person = new Person();
         person.setId(id);
         this.personRepository.delete(person);
-        return ResponseEntity.ok().build();
     }
 }

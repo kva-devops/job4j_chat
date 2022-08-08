@@ -1,5 +1,7 @@
 package ru.job4j.chat.model;
 
+import lombok.Getter;
+import lombok.Setter;
 import ru.job4j.chat.handlers.Operation;
 
 import javax.persistence.*;
@@ -8,8 +10,13 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Null;
 import java.util.Objects;
 
+/**
+ * Model of person
+ */
 @Entity
 @Table(name = "persons")
+@Getter
+@Setter
 public class Person {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,38 +46,6 @@ public class Person {
         person.password = password;
         person.role = role;
         return person;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public Role getRole() {
-        return role;
-    }
-
-    public void setRole(Role role) {
-        this.role = role;
     }
 
     @Override

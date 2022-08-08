@@ -1,7 +1,7 @@
 package ru.job4j.chat.controller;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -17,17 +17,24 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+/**
+ * Rest controller for working with objects of Role
+ */
 @RestController
 @Validated
 @RequestMapping("/role")
+@RequiredArgsConstructor
 public class RoleController {
 
+    /**
+     * DAO for Role models
+     */
     private final RoleRepository roleRepository;
 
-    public RoleController(RoleRepository roleRepository) {
-        this.roleRepository = roleRepository;
-    }
-
+    /**
+     * GET method for finding all roles
+     * @return List of role
+     */
     @GetMapping("/")
     public List<Role> findAll() {
         return StreamSupport.stream(
@@ -35,33 +42,42 @@ public class RoleController {
         ).collect(Collectors.toList());
     }
 
+    /**
+     * GET method for finding Role object by role ID
+     * @param id role ID
+     * @return Role object
+     */
     @GetMapping("/{id}")
-    public ResponseEntity<Role> findById(@PathVariable int id) {
+    public Role findById(@PathVariable int id) {
         var role = this.roleRepository.findById(id);
         if (role.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Role not found");
         }
-        return ResponseEntity.status(HttpStatus.OK)
-                .header("Content-Type", "application/json")
-                .body(role.get());
+        return role.get();
     }
 
+    /**
+     * POST method for creating new Role
+     * @param role Role object
+     * @return created Role object
+     */
     @PostMapping("/")
     @Validated(Operation.OnCreate.class)
-    public ResponseEntity<Role> create(@Valid @RequestBody Role role) {
+    public Role create(@Valid @RequestBody Role role) {
         if (role.getName() == null) {
             throw new NullPointerException("Name field is empty");
         }
         Role buff = Role.of(role.getName());
-        return new ResponseEntity<>(
-                this.roleRepository.save(buff),
-                HttpStatus.CREATED
-        );
+        return this.roleRepository.save(buff); // add validation
     }
 
+    /**
+     * PATCH method for updating Role object
+     * @param role Role object
+     */
     @PatchMapping("/")
     @Validated(Operation.OnCreate.class)
-    public ResponseEntity<Void> update(@RequestBody Role role) throws InvocationTargetException, IllegalAccessException {
+    public void update(@RequestBody Role role) throws InvocationTargetException, IllegalAccessException {
         var current = roleRepository.findById(role.getId());
         if (current.isEmpty()) {
             throw new NullPointerException("Role not found");
@@ -89,18 +105,20 @@ public class RoleController {
             }
         }
         roleRepository.save(buffRole);
-        return ResponseEntity.ok().build();
     }
 
+    /**
+     * DELETE method for deleting Role from database by role ID
+     * @param id role ID
+     */
     @DeleteMapping("/{id}")
     @Validated(Operation.OnDelete.class)
-    public ResponseEntity<Void> delete(@PathVariable int id) {
+    public void delete(@PathVariable int id) {
         if (this.roleRepository.findById(id).isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Role not found");
         }
         Role role = new Role();
         role.setId(id);
         this.roleRepository.delete(role);
-        return ResponseEntity.ok().build();
     }
 }

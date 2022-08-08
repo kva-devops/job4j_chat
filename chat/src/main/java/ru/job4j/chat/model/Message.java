@@ -1,5 +1,7 @@
 package ru.job4j.chat.model;
 
+import lombok.Getter;
+import lombok.Setter;
 import ru.job4j.chat.handlers.Operation;
 
 import javax.persistence.*;
@@ -8,8 +10,13 @@ import javax.validation.constraints.NotNull;
 import java.sql.Timestamp;
 import java.util.Objects;
 
+/**
+ * Model of message
+ */
 @Entity
 @Table(name = "messages")
+@Getter
+@Setter
 public class Message {
 
     @Id
@@ -41,46 +48,6 @@ public class Message {
         message.person = person;
         message.created = new Timestamp(System.currentTimeMillis());
         return message;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public String getText() {
-        return text;
-    }
-
-    public void setText(String text) {
-        this.text = text;
-    }
-
-    public Timestamp getCreated() {
-        return created;
-    }
-
-    public void setCreated(Timestamp created) {
-        this.created = created;
-    }
-
-    public Room getRoom() {
-        return room;
-    }
-
-    public void setRoom(Room room) {
-        this.room = room;
-    }
-
-    public Person getPerson() {
-        return person;
-    }
-
-    public void setPerson(Person person) {
-        this.person = person;
     }
 
     @Override

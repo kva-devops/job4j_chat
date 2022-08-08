@@ -1,5 +1,7 @@
 package ru.job4j.chat.model;
 
+import lombok.Getter;
+import lombok.Setter;
 import ru.job4j.chat.handlers.Operation;
 
 import javax.persistence.*;
@@ -7,8 +9,13 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.util.Objects;
 
+/**
+ * Model of room
+ */
 @Entity
 @Table(name = "rooms")
+@Getter
+@Setter
 public class Room {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -17,6 +24,9 @@ public class Room {
     })
     private int id;
 
+    /**
+     * Name of room
+     */
     @NotEmpty(message = "Name must be non empty", groups = {
             Operation.OnCreate.class, Operation.OnUpdate.class
     })
@@ -26,22 +36,6 @@ public class Room {
         Room room = new Room();
         room.name = name;
         return room;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     @Override

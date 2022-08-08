@@ -1,5 +1,7 @@
 package ru.job4j.chat.model;
 
+import lombok.Getter;
+import lombok.Setter;
 import ru.job4j.chat.handlers.Operation;
 
 import javax.persistence.*;
@@ -8,8 +10,13 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Null;
 import java.util.Objects;
 
+/**
+ * Model of role
+ */
 @Entity
 @Table(name = "roles")
+@Getter
+@Setter
 public class Role {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -19,6 +26,9 @@ public class Role {
     @Null(groups = Operation.OnCreate.class)
     private int id;
 
+    /**
+     * Name of role
+     */
     @NotBlank(message = "Name must be non empty", groups = {
             Operation.OnCreate.class, Operation.OnUpdate.class
     })
@@ -28,22 +38,6 @@ public class Role {
         Role role = new Role();
         role.name = name;
         return role;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     @Override

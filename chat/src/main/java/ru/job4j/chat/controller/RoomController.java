@@ -1,8 +1,7 @@
 package ru.job4j.chat.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -10,10 +9,7 @@ import ru.job4j.chat.handlers.Operation;
 import ru.job4j.chat.model.Room;
 import ru.job4j.chat.repository.RoomRepository;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -22,20 +18,24 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+/**
+ * Rest controller for working with models of Room
+ */
 @RestController
 @Validated
 @RequestMapping("/room")
+@RequiredArgsConstructor
 public class RoomController {
 
-    private final ObjectMapper mapper;
-
+    /**
+     * DAO for models of Room
+     */
     private final RoomRepository roomRepository;
 
-    public RoomController(ObjectMapper mapper, RoomRepository roomRepository) {
-        this.mapper = mapper;
-        this.roomRepository = roomRepository;
-    }
-
+    /**
+     * GET method for getting all available Rooms
+     * @return List of rooms
+     */
     @GetMapping("/")
     public List<Room> findAll() {
         return StreamSupport.stream(
@@ -43,21 +43,28 @@ public class RoomController {
         ).collect(Collectors.toList());
     }
 
+    /**
+     * GET method for getting Room object by room ID
+     * @param id - room ID
+     * @return Room object
+     */
     @GetMapping("/{id}")
-    public ResponseEntity<Room> findById(@PathVariable int id) {
+    public Room findById(@PathVariable int id) {
         var room = this.roomRepository.findById(id);
         if (room.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Room not found");
         }
-        return new ResponseEntity<>(
-                room.get(),
-                HttpStatus.OK
-        );
+        return room.get();
     }
 
+    /**
+     * GET method for creating new Room
+     * @param room - object of Room
+     * @return object of Room
+     */
     @PostMapping("/")
     @Validated(Operation.OnCreate.class)
-    public ResponseEntity<Room> create(@Valid @RequestBody Room room) {
+    public Room create(@Valid @RequestBody Room room) {
         if (room.getName() == null) {
             throw new NullPointerException("Name field is empty");
         }
@@ -65,15 +72,16 @@ public class RoomController {
             throw new IllegalArgumentException("You cant use stop-word in room name");
         }
         Room buff = Room.of(room.getName());
-        return new ResponseEntity<>(
-                this.roomRepository.save(buff),
-                HttpStatus.CREATED
-        );
+        return this.roomRepository.save(buff);
     }
 
+    /**
+     * PATCH method for updating object of Room
+     * @param room object of Room
+     */
     @PatchMapping("/")
     @Validated(Operation.OnUpdate.class)
-    public ResponseEntity<Void> update(@Valid @RequestBody Room room) throws InvocationTargetException, IllegalAccessException {
+    public void update(@Valid @RequestBody Room room) throws InvocationTargetException, IllegalAccessException {
         var current = roomRepository.findById(room.getId());
         if (current.isEmpty()) {
             throw new NullPointerException("Room not found");
@@ -101,31 +109,20 @@ public class RoomController {
             }
         }
         roomRepository.save(buffRoom);
-        return ResponseEntity.ok().build();
     }
 
+    /**
+     * DELETE method for deleting object of Room by room ID
+     * @param id - room ID
+     */
     @DeleteMapping("/{id}")
     @Validated(Operation.OnDelete.class)
-    public ResponseEntity<Void> delete(@Valid @PathVariable int id) {
+    public void delete(@Valid @PathVariable int id) {
         if (this.roomRepository.findById(id).isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Room not found");
         }
         Room room = new Room();
         room.setId(id);
         this.roomRepository.delete(room);
-        return ResponseEntity.ok().build();
-    }
-
-    @ExceptionHandler(value = IllegalArgumentException.class)
-    public void exceptionHandler(
-            Exception e,
-            HttpServletRequest req,
-            HttpServletResponse resp) throws IOException {
-        resp.setStatus(HttpStatus.BAD_REQUEST.value());
-        resp.setContentType("application/json");
-        resp.getWriter().write(mapper.writeValueAsString(new HashMap<>() { {
-            put("message", e.getMessage());
-            put("type", e.getClass());
-        } }));
     }
 }

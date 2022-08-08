@@ -10,6 +10,9 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.HashMap;
 
+/**
+ * Controller for handling all exceptions that occur in the application
+ */
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
