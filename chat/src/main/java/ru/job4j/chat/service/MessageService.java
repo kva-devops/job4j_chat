@@ -1,5 +1,7 @@
 package ru.job4j.chat.service;
 
+import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -22,23 +24,19 @@ import java.util.stream.StreamSupport;
  */
 @Service
 @Slf4j
+@AllArgsConstructor
 public class MessageService {
-
-    private RestTemplate rest;
 
     private static final String PERSON_API_USERNAME = "http://localhost:8080/users/username/{username}";
 
     private static final String ROOM_API_ID = "http://localhost:8080/room/{id}";
 
+    private RestTemplate rest;
+
     /**
      * DAO for messages
      */
     private final MessageRepository messageRepository;
-
-    public MessageService(RestTemplate rest, MessageRepository messageRepository) {
-        this.rest = rest;
-        this.messageRepository = messageRepository;
-    }
 
     /**
      * Method for getting all messages
@@ -145,7 +143,7 @@ public class MessageService {
                 try {
                     newValue = getMethod.invoke(message);
                 } catch (IllegalAccessException | InvocationTargetException e) {
-                    e.printStackTrace();
+                    throw new NullPointerException("An internal error has occurred. Please try again later or contact technical support with the 'anchor'. anchor: " + anchor);
                 }
                 if (name.equals("getCreated")) {
                     newValue = new Timestamp(System.currentTimeMillis());
@@ -154,7 +152,7 @@ public class MessageService {
                     try {
                         setMethod.invoke(buffMessage, newValue);
                     } catch (IllegalAccessException | InvocationTargetException e) {
-                        e.printStackTrace();
+                        throw new NullPointerException("An internal error has occurred. Please try again later or contact technical support with the 'anchor'. anchor: " + anchor);
                     }
                 }
             }
@@ -166,7 +164,7 @@ public class MessageService {
      * Method for deleting message
      * @param messageId - message ID
      */
-    public void deleteMessage(int messageId) {
+    public void deleteMessageById(int messageId) {
         String anchor = UUID.randomUUID().toString();
         Optional<Message> foundMessage = messageRepository.findById(messageId);
         if (foundMessage.isEmpty()) {

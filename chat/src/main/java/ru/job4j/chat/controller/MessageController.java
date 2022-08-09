@@ -1,5 +1,6 @@
 package ru.job4j.chat.controller;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.job4j.chat.handlers.Operation;
@@ -15,15 +16,12 @@ import java.util.List;
 @RestController
 @Validated
 @RequestMapping("/message")
+@RequiredArgsConstructor
 public class MessageController {
     /**
      * Business logic for working with object of Message
      */
     private final MessageService messageService;
-
-    public MessageController(MessageService messageService) {
-        this.messageService = messageService;
-    }
 
     /**
      * GET method for getting all messages
@@ -84,6 +82,6 @@ public class MessageController {
     @DeleteMapping("/{id}")
     @Validated(Operation.OnDelete.class)
     public void delete(@Valid @PathVariable int id) {
-        messageService.deleteMessage(id);
+        messageService.deleteMessageById(id);
     }
 }

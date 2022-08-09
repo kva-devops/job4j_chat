@@ -34,7 +34,7 @@ public class RoleService {
     public List<Role> findAllRoles() {
         String anchor = UUID.randomUUID().toString();
         List<Role> roleList = StreamSupport.stream(
-                this.roleRepository.findAll().spliterator(), false
+                roleRepository.findAll().spliterator(), false
         ).collect(Collectors.toList());
         if (roleList == null) {
             throw new NullPointerException("An internal error has occurred. Please try again later or contact technical support with the 'anchor'. anchor: " + anchor);
@@ -49,7 +49,7 @@ public class RoleService {
      */
     public Role findRoleById(int roleId) {
         String anchor = UUID.randomUUID().toString();
-        Optional<Role> role = this.roleRepository.findById(roleId);
+        Optional<Role> role = roleRepository.findById(roleId);
         if (role.isEmpty()) {
             throw new IllegalArgumentException("Role not found. Actual parameters: role ID - " + roleId + ". Please contact technical support with the 'anchor'. anchor: " + anchor);
         }
@@ -66,7 +66,7 @@ public class RoleService {
         if (role.getName() == null) {
             throw new IllegalArgumentException("Name of role is empty. Please contact technical support with the 'anchor'. anchor: " + anchor);
         }
-        Role addedRole = this.roleRepository.save(Role.of(role.getName()));
+        Role addedRole = roleRepository.save(Role.of(role.getName()));
         if (addedRole == null) {
             throw new NullPointerException("An internal error has occurred. Please try again later or contact technical support with the 'anchor'. anchor: " + anchor);
         }
@@ -79,11 +79,11 @@ public class RoleService {
      */
     public void updateRole(Role role) {
         String anchor = UUID.randomUUID().toString();
-        var current = roleRepository.findById(role.getId());
-        if (current.isEmpty()) {
+        var currentRole = roleRepository.findById(role.getId());
+        if (currentRole.isEmpty()) {
             throw new IllegalArgumentException("Role not found. Actual parameters: role ID - " + role.getId() + ". Please contact technical support with the 'anchor'. anchor: " + anchor);
         }
-        var buffRole = current.get();
+        var buffRole = currentRole.get();
         var methods = buffRole.getClass().getDeclaredMethods();
         var namePerMethod = new HashMap<String, Method>();
         for (var method : methods) {
@@ -103,13 +103,13 @@ public class RoleService {
                 try {
                     newValue = getMethod.invoke(role);
                 } catch (IllegalAccessException | InvocationTargetException e) {
-                    e.printStackTrace();
+                    throw new NullPointerException("An internal error has occurred. Please try again later or contact technical support with the 'anchor'. anchor: " + anchor);
                 }
                 if (newValue != null) {
                     try {
                         setMethod.invoke(buffRole, newValue);
                     } catch (IllegalAccessException | InvocationTargetException e) {
-                        e.printStackTrace();
+                        throw new NullPointerException("An internal error has occurred. Please try again later or contact technical support with the 'anchor'. anchor: " + anchor);
                     }
                 }
             }
